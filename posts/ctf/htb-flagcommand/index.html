@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTB Flag Command</title>
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;              /* ↑ readability */
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@htb</span>
+    <span>~/flag-command</span>
+  </div>
+
+  <main class="wrap">
+    <h1>HTB Flag Command</h1>
+
+    <div class="tags">
+      <span class="tag">HTB</span>
+      <span class="tag">CTF</span>
+    </div>
+
+    <h2>Challenge Overview</h2>
+    <p>
+      The <strong class="cmd">Flag Command</strong> challenge was a web-based puzzle where the goal was to uncover hidden commands and eventually extract the flag.<br>
+      At first glance, it looked like a text-based adventure game running in the browser.
+    </p>
+
+    <h2>Step 1: The Initial Scene</h2>
+    <p>When we loaded the page, we were greeted with a creepy game-like screen:</p>
+    <img src="fc1.jpg" alt="Game Screen">
+    <p>It described an eerie forest with mysterious instructions and a prompt to begin.</p>
+
+    <h2>Step 2: Inspecting the Responses</h2>
+    <p>Opening <strong class="cmd">DevTools → Network/Response tab</strong>, we found JSON objects containing all possible commands.</p>
+    <img src="fc2.jpg" alt="DevTools JSON">
+    <p>This gave away the available paths like <code>HEAD NORTH</code>, <code>EXPLORE A CAVE</code>, etc.<br>
+    But among them, there was something extra…</p>
+
+    <h2>Step 3: Finding the Hidden Secret</h2>
+    <p>Deeper inside the JSON, a hidden key appeared:</p>
+    <img src="fc3.jpg" alt="Hidden Secret">
+    <p>The <code>secret</code> field contained a strange string:</p>
+    <p><em>This unusual text was the flag disguised as a joke.</em></p>
+
+    <h2>Conclusion</h2>
+    <p>The challenge tested:</p>
+    <ul>
+      <li>Observation skills</li>
+      <li>Using DevTools effectively</li>
+      <li>Finding hidden values inside JSON</li>
+    </ul>
+    <p><strong class="cmd">Flag captured successfully</strong></p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

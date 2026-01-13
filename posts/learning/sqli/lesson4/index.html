@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 4 (Blind - Time based)</title>
+
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-04</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 4 (Blind injections - Time based)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">Blind Time</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>Blind injections -(Time based)</h2>
+    <p>An injection technique where the attacker cannot see the query output directly; instead, they infer information through side‑effects such as time delays or content changes.</p>
+
+    <h2>Inject parameter</h2>
+    <ol>
+      <li>Look for parameters placed inside single quotes: <code>id='...'</code></li>
+      <li>Confirm the server shows delays or responds immediately.</li>
+      <li>By measuring latency you can infer boolean results and enumerate the database.</li>
+    </ol>
+    <p>If the delay happen, parameter is injectable.</p>
+
+    <h2>Time-Based Payloads Construction</h2>
+    <ol>
+      <li>Identify injection point (e.g., a URL parameter that is quoted in the query).</li>
+      <li>Close the original string with a single quote (').</li>
+      <li>Insert the conditional payload using <strong>IF</strong>.</li>
+      <li>Terminate the rest of the query with a comment (-- ).</li>
+      <li>Observe the response time to decide true/false.</li>
+    </ol>
+
+    <h2>Query will be like this</h2>
+    <pre><code>' OR IF(SUBSTRING(DATABASE(),1,1)='s', SLEEP(10), 0)--</code></pre>
+    <p>The query means: If the first character of the database name is s, the server sleeps 10s → true. Otherwise the response is immediate → false.</p>
+
+    <h2>Testing Payloads</h2>
+    <ul>
+      <li>For this I'm using the this query to test <strong>true/false</strong>.</li>
+      <li>If it's true the query will show <strong>delay in server</strong>.</li>
+    </ul>
+
+    <pre><code>?id=1' and sleep(10)--+</code></pre>
+    <img src="../../../../assets/images/sqli-04/1.jpg" alt="1">
+
+    <p>As you can see on the top left of the web page. The server is reloading it's mean the query is <strong>True</strong></p>
+
+    <p>Now we can check the version and other things (character by character).</p>
+
+    <pre><code>?id=1' and if((select version()) like "10%", sleep(10), null)--+</code></pre>
+    <img src="../../../../assets/images/sqli-04/2.jpg" alt="2">
+
+    <p>As you can see the <strong>server reload</strong> on the <strong>Top Left</strong> of the webpage it's mean the payload is <strong>True</strong>.</p>
+
+    <pre><code>?id=1' and  if((select substr(table_name,1,1) from information_schema.tables where table_schema=database()  limit 0,1)='e', sleep(10), null)--+</code></pre>
+    <img src="../../../../assets/images/sqli-04/3.jpg" alt="3">
+
+    <p>As you can see our result is <strong>True</strong> you can see the reload on <strong>Top Left</strong>.</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

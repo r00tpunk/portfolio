@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTB SpookyPass</title>
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@htb</span>
+    <span>~/spookypass</span>
+  </div>
+
+  <main class="wrap">
+    <h1>HTB Challenge: SpookyPass (Beginner Write-up)</h1>
+
+    <div class="tags">
+      <span class="tag">HTB</span>
+      <span class="tag">CTF</span>
+    </div>
+
+    <p>
+      This is my write-up for the <strong class="cmd">HackTheBox challenge SpookyPass</strong>.<br>
+      It’s a reversing challenge, and since I’m still in my first year of university, I’ll keep it simple and explain step by step how I solved it.
+    </p>
+
+    <h2>Step 1: Download and Unzip the Files</h2>
+    <p>First, I downloaded the zip file from the challenge and unzipped it:</p>
+    <pre><code>unzip SpookyPass.zip</code></pre>
+    <p>Inside, I found a folder called <code>rev_spookypass</code>.</p>
+    <img src="zip-unzip.png" alt="zip-unzip">
+    <p>I moved into the folder:</p>
+    <pre><code>cd rev_spookypass</code></pre>
+    <p>When I listed the files, I saw there was only one file named <code>pass</code>.</p>
+    <img src="rev-ls.png" alt="rev-ls">
+
+    <h2>Step 2: Check the File Type</h2>
+    <p>Before running any unknown file, I checked what kind of file it was:</p>
+    <pre><code>file pass</code></pre>
+    <img src="file.png" alt="file">
+    <p>It showed me that this was an executable binary.</p>
+
+    <h2>Step 3: Run the File</h2>
+    <p>I tried running it with:</p>
+    <pre><code>./pass</code></pre>
+    <p>It asked me for a password. When I entered something random, it replied:</p>
+    <pre><code>You're not a real ghost, clear off!</code></pre>
+    <img src="pass.png" alt="pass">
+    <p>So clearly, I needed to figure out the correct password.</p>
+
+    <h2>Step 4: Use Strings to Find the Password</h2>
+    <p>Since this is a reversing challenge, I thought of using the <code>strings</code> command.<br>
+    This command shows all readable text inside a binary file:</p>
+    <pre><code>strings pass</code></pre>
+    <img src="string-pass.png" alt="string-pass">
+    <p>Looking through the output, I found the actual password hidden in the file.</p>
+
+    <h2>Step 5: Enter the Password</h2>
+    <p>I ran the program again and entered the password I found from <code>strings</code>.</p>
+    <img src="congo.png" alt="congo">
+    <p>It worked 🎉 The program revealed the flag.</p>
+
+    <h2>Conclusion</h2>
+    <p>This was a fun beginner challenge. I learned a few things:</p>
+    <ul>
+      <li>Always check what type of file you’re dealing with.</li>
+      <li>The <code>strings</code> command can be super helpful for finding hidden text in executables.</li>
+      <li>Sometimes challenges are easier than they look — you don’t always need advanced reversing tools.</li>
+    </ul>
+    <p class="cmd">✅ Flag Captured!</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

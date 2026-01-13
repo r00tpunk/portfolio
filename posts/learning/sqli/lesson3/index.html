@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 3 (Blind - Boolean)</title>
+
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-03</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 3 (Blind injections - Boolean based)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">Blind Boolean</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>Blind injections -(Boolean based)</h2>
+    <p>Blind SQL injection is a technique where the attacker can infer information from the database without seeing the actual query output, using only binary responses.</p>
+    <p>With pure blind SQLi the application won’t print database values for you — you can only test true/false.</p>
+    <p>Boolean‑based – the injected condition evaluates to TRUE or FALSE.</p>
+
+    <h2>Inject parameter</h2>
+    <ol>
+      <li>Look for parameters placed inside single quotes: <code>id='...'</code></li>
+      <li>Confirm the app shows errors or returns a page that changes on bad input (even if message hidden — error may still be logged).</li>
+    </ol>
+    <p>If the response changes, parameter is injectable. If you get SQL error, good — proceed carefully.</p>
+
+    <h2>Boolean Logic Construction</h2>
+    <ol>
+      <li>Inject an AND clause that always evaluates to true or false.</li>
+      <li>True example: AND 1=1 → page shows <strong>“you are in”</strong>.</li>
+      <li>False example: AND 1=0 → no output.</li>
+      <li>Boolean‑blind SQLi doesn’t print database values to the page for you; it only lets you test <strong>true/false</strong> conditions.</li>
+    </ol>
+
+    <h2>Testing queries</h2>
+    <p>As you can see this is the normal test lab</p>
+    <pre><code>http://localhost:8080/sqli-labs/sqli-labs-master/Less-8/</code></pre>
+    <img src="../../../../assets/images/sqli-03/biN.jpg" alt="biN">
+
+    <p><strong>Now let's break the query</strong></p>
+    <ul>
+      <li>For this I'm using the this query to test <strong>true/false</strong>.</li>
+      <li>If it's true the query will show us output such as <strong>“you are in”</strong>.</li>
+    </ul>
+
+    <pre><code>?id=1' AND (ascii(substr((select table_name from information_schema.tables where table_schema=database() limit 0,1),1,1))) < 101 --+</code></pre>
+    <img src="../../../../assets/images/sqli-03/biB.jpg" alt="biB">
+
+    <p>Now we can see that the query is broken now it's mean it's false that's why we are not getting any output from it.</p>
+
+    <pre><code>?id=1' AND (ascii(substr((select table_name from information_schema.tables where table_schema=database() limit 0,1),1,1))) < 105 --+</code></pre>
+    <img src="../../../../assets/images/sqli-03/biC.jpg" alt="biC">
+
+    <p>Now you can see that the query is correct now it's mean its true.</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

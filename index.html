@@ -4,78 +4,7 @@
   <meta charset="UTF-8">
   <title>r00tpunk – ~/$ whoami</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root {
-      --bg: #0d0f17;
-      --surface: #13151c;
-      --text: #a0a8b8;
-      --accent: #7aa2f7;
-      --border: #24283b;
-      --cyan: #7dcfff;
-      --green: #9ece6a;
-      --yellow: #e0af68;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: "FiraCode Nerd Font", monospace;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 4px 12px;
-      display: flex;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-    }
-
-    .bar span { color: var(--accent); }
-
-    .wrap {
-      max-width: 960px;
-      margin: auto;
-      padding: 2rem 1rem;
-    }
-
-    .prompt { color: var(--green); }
-    .cmd { color: var(--yellow); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin: 1rem 0;
-    }
-
-    .box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1rem;
-      font-family: monospace;
-      white-space: pre-line;
-    }
-
-    .box h3 {
-      color: var(--accent);
-      margin-bottom: .5rem;
-      white-space: normal;
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem 0;
-      color: var(--cyan);
-      font-size: 12px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -92,14 +21,11 @@
   <p>Cybersecurity • Pentesting • CTFs • Bugs Hunting • Wanna be a hacker.</p>
   <br>
 
-  <!-- neofetch (MOVED HERE) -->
+  <!-- neofetch -->
   <p class="prompt">r00tpunk <span class="cmd">~/$ neofetch</span></p>
-  <div class="box" style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:1rem;">
-    <img src="Screenshot_1.jpg"
-         alt="Terminal screenshot"
-         style="width:158px; max-width:100%; border-radius:5px;">
-
-    <div id="neofetchText" style="font-family:monospace; line-height:1.5; white-space:pre;"></div>
+  <div class="box neofetch-box">
+    <img src="assets/images/Screenshot_1.jpg" alt="Terminal screenshot">
+    <div id="neofetchText"></div>
   </div>
 
   <!-- skills -->
@@ -109,133 +35,47 @@
     <div class="box" id="toolsBox">Loading tools...</div>
   </div>
 
-  <!-- repos -->
-  <p class="prompt">r00tpunk <span class="cmd">~/$ tree repos -L 1</span></p>
-  <div class="grid">
-    <div class="box" style="white-space:pre;">
-repos
-├── <a href="https://r00tpunk.github.io/posts/ctf/" target="_blank" style="color:var(--cyan)">writeups/</a>
-│   └── HTB, CTF & SQLi walkthroughs
-├── <a href="https://r00tpunk.github.io/posts/learning/" target="_blank" style="color:var(--cyan)">sqli-labs/</a>
-│   └── SQL Injection lab tests & notes
-└── <a href="https://r00tpunk.github.io/" target="_blank" style="color:var(--cyan)">r00tpunk.github.io</a>
-    └── notes
-    </div>
+  <!--posts-->
+
+  <!-- posts tree -->
+<p class="prompt">r00tpunk <span class="cmd">~/$ tree posts</span></p>
+<div class="grid">
+  <div class="box tree" style="white-space:pre;">
+
+posts
+├── ctf/
+│   ├── <a href="posts/ctf/htb-flagcommand/index.html">HTB-flagcommand</a>
+│   ├── <a href="posts/ctf/htb-spookifier/index.html">HTB-spookifier</a>
+│   └── <a href="posts/ctf/htb-spookypass/index.html">HTB-spookypass</a>
+│
+└── learning/
+    ├── sqli/
+    │   ├── <a href="posts/learning/sqli/intro/index.html">[Introduction to SQL Injection →]</a>
+    │   ├── <a href="posts/learning/sqli/lesson1/index.html">[Lesson 1: Error-Based Injection →]</a>
+    │   ├── <a href="posts/learning/sqli/lesson2/index.html">[Lesson 2: Double Query Injection →]</a>
+    │   ├── <a href="posts/learning/sqli/lesson3/index.html">[Lesson 3: Boolean-Based Blind Injection →</a>
+    │   ├── <a href="posts/learning/sqli/lesson4/index.html">[Lesson 4: Time-Based Blind Injection →]</a>
+    │   ├── <a href="posts/learning/sqli/lesson5/index.html">[Lesson 5: POST Parameter Injection →]</a>
+    │   └── <a href="posts/learning/sqli/lesson6/index.html">[Lesson 6: Second Order Injection →]</a>
+    │
+    └── xss/
+        ├── <a href="posts/learning/xss/intro/index.html">[Introduction to Cross Site Scripting XSS →]</a>
+
   </div>
+</div>
+
 
   <!-- contact -->
   <p class="prompt">r00tpunk <span class="cmd">~/$ echo $CONTACT</span></p>
   <p>
-    <a href="https://github.com/r00tpunk" style="color:var(--cyan)">github</a> |
-    <a href="https://www.linkedin.com/in/r00tpunk/" style="color:var(--cyan)">linkedin</a>
+    <a href="https://github.com/r00tpunk">github</a> |
+    <a href="https://www.linkedin.com/in/r00tpunk/">linkedin</a>
   </p>
 
 </div>
 
 <footer>stay ethical — r00tpunk</footer>
 
-<script>
-/* clock */
-setInterval(() => {
-  document.getElementById("date").textContent =
-    new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
-}, 1000);
-
-/* neofetch animation */
-const neofetchLines = [
-  { label: "r00tpunk@kali ~", value: "" },
-  { label: "-----------------------------", value: "" },
-  { label: "OS      :", value: "Kali Linux" },
-  { label: "Shell   :", value: "zsh" },
-  { label: "Skills  :", value: "SQLi, Web Pentesting, Linux/Bash, Python, JS/HTML/CSS" },
-  { label: "Tools   :", value: "Nmap, Burp Suite, Metasploit, Wireshark, Hydra" },
-  { label: "Labs    :", value: "HTB / VulnHub / SQLi Labs" },
-  { label: "Status  :", value: "Grinding & Learning" }
-];
-
-const container = document.getElementById("neofetchText");
-let lineIndex = 0;
-
-function typeLine(line, callback) {
-  let charIndex = 0;
-  const lineEl = document.createElement("div");
-
-  const labelSpan = document.createElement("span");
-  labelSpan.style.color = "var(--accent)";
-  labelSpan.textContent = line.label + " ";
-  lineEl.appendChild(labelSpan);
-
-  const valueSpan = document.createElement("span");
-  valueSpan.style.color = "var(--cyan)";
-  lineEl.appendChild(valueSpan);
-
-  container.appendChild(lineEl);
-
-  function typeChar() {
-    if (charIndex < line.value.length) {
-      valueSpan.textContent += line.value[charIndex++];
-      setTimeout(typeChar, 20);
-    } else callback();
-  }
-
-  if (line.value.length) typeChar();
-  else callback();
-}
-
-(function typeNext() {
-  if (lineIndex < neofetchLines.length)
-    typeLine(neofetchLines[lineIndex++], typeNext);
-})();
-</script>
-
-<script>
-/* skills & tools typing */
-function type(el, lines, speed = 30) {
-  let i = 0, j = 0;
-  el.textContent = "";
-  function tick() {
-    if (i < lines.length) {
-      if (j < lines[i].length) {
-        el.textContent += lines[i][j++];
-        setTimeout(tick, speed);
-      } else {
-        el.textContent += "\n";
-        i++; j = 0;
-        setTimeout(tick, speed);
-      }
-    }
-  }
-  tick();
-}
-
-type(document.getElementById("skillsBox"), [
-"$ SQL Injection",
-"$ Web App Pentesting (OWASP Top 10)",
-"$ Auth attacks & logic flaws",
-"$ Recon & enumeration",
-"$ Linux privilege escalation",
-"$ Networking (TCP/IP, DNS, HTTP)",
-"$ Packet analysis (PCAP)",
-"$ CTF problem solving",
-"$ Python & Bash automation",
-"$ Technical write-ups (Markdown)"
-]);
-
-type(document.getElementById("toolsBox"), [
-"$ which tools",
-"/usr/bin/nmap",
-"/usr/bin/burp",
-"/usr/bin/sqlmap",
-"/usr/bin/ffuf",
-"/usr/bin/gobuster",
-"/usr/bin/wireshark",
-"/usr/bin/metasploit",
-"/usr/bin/linpeas",
-"/usr/bin/hydra",
-"/usr/bin/hashcat",
-"/usr/bin/python"
-]);
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>

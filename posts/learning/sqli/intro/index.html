@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Intro</title>
+
+  <!-- Terminal-theme CSS -->
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/learning/sqli</span>
+  </div>
+
+  <main class="wrap">
+    <h1>01. SQL Injection</h1>
+
+    <div class="tags">
+      <span class="tag">SQLi</span>
+      <span class="tag">Learning</span>
+    </div>
+
+    <p>
+      SQL Injection (SQLi) is a <strong class="cmd">web security vulnerability</strong> that allows attackers to manipulate a website’s database by injecting malicious SQL code into user input fields.
+    </p>
+
+    <h2>Why SQL Injection Happens</h2>
+    <p>SQL Injection occurs due to improper handling of user input. When input is inserted directly into SQL queries without validation, attackers can modify queries.</p>
+
+    <p><strong>Example:</strong></p>
+    <pre><code>SELECT * FROM users WHERE username = 'user_input' AND password = 'user_input';</code></pre>
+    <p>Attacker input:</p>
+    <pre><code>' OR '1'='1</code></pre>
+    <p>Becomes:</p>
+    <pre><code>SELECT * FROM users WHERE username = '' OR '1'='1' AND password = '';</code></pre>
+
+    <h2>Prevention</h2>
+    <ul>
+      <li>Use Prepared Statements / Parameterized Queries:
+        <pre><code>$stmt = $pdo->prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+$stmt->execute([$username, $password]);</code></pre>
+      </li>
+      <li>Validate and sanitize all input.</li>
+      <li>Use stored procedures.</li>
+      <li>Limit database user permissions.</li>
+      <li>Use Web Application Firewalls (WAFs).</li>
+    </ul>
+
+    <h2>Fixing SQL Injection</h2>
+    <ul>
+      <li>Identify vulnerable queries.</li>
+      <li>Refactor with prepared statements or ORM methods.</li>
+      <li>Sanitize all input.</li>
+      <li>Review database permissions.</li>
+      <li>Monitor logs for suspicious activity.</li>
+    </ul>
+
+    <h2>Conclusion</h2>
+    <p>SQL Injection is dangerous but preventable. Proper coding practices, input validation, and prepared statements keep your applications safe.</p>
+    <p class="cmd">✅ Stay secure!</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

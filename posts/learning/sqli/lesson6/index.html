@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 6 (Second Order Injections)</title>
+
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-06</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 6 (Second‑Order Injections)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">Second Order</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>Second‑Order Injection</h2>
+    <p>Second‑Order SQL injection is similar to stored cross‑site scripting: the attacker injects malicious payload into the database, and the payload is later used in a different query on another page, causing the injection at a later time.</p>
+
+    <h2>Lab Walkthrough</h2>
+    <p>Database before creating user.</p>
+    <img src="../../../../assets/images/sqli-06/dbbefore.jpg" alt="dbbefore">
+
+    <h3>User Registration & Login Flow</h3>
+    <ol>
+      <li><strong>Sign‑up:</strong><br>
+        <img src="../../../../assets/images/sqli-06/signup.jpg" alt="signup">
+      </li>
+      <li>Enter a username and password (e.g., <em>1234 / p@ssw0rd</em>) in my case I'm using <strong class="cmd">r00tpunk</strong> as Username and <strong class="cmd">blah</strong> as Password.<br>
+        <img src="../../../../assets/images/sqli-06/creatinguser.jpg" alt="creatinguser">
+      </li>
+      <li>User successfully created.<br>
+        <img src="../../../../assets/images/sqli-06/usercreated.jpg" alt="usercreated">
+      </li>
+    </ol>
+
+    <h3>Login:</h3>
+    <ol>
+      <li>Provide the newly created credentials on the login page.<br>
+        <img src="../../../../assets/images/sqli-06/nowlogin.jpg" alt="nowlogin">
+      </li>
+      <li>Successful login shows a welcome message and a boxes to change the password.<br>
+        <img src="../../../../assets/images/sqli-06/loggedin.jpg" alt="loggedin">
+      </li>
+    </ol>
+
+    <p>Database after creating user.</p>
+    <img src="../../../../assets/images/sqli-06/dbafter.jpg" alt="dbafter">
+
+    <h2>Attempting Injection on Username Field</h2>
+    <ol>
+      <li>I'm creating a second user with username <strong class="cmd">r00tpunk' --</strong> and password <strong class="cmd">1234</strong>.</li>
+      <li>The application’s input sanitisation treats the string as a literal, so the user is created with the exact username <strong>r00tpunk' --</strong>.</li>
+      <li>Logging in with <strong>r00tpunk' --</strong> / <strong>1234</strong> succeeds,<br>
+        <img src="../../../../assets/images/sqli-06/newloggedin.jpg" alt="newloggedin">
+      </li>
+      <li>Showing that the injected username is stored.<br>
+        <img src="../../../../assets/images/sqli-06/newuserindb.jpg" alt="newuserindb">
+      </li>
+      <li>Look at the Database at number 17 before changing the password of <strong>r00tpunk' --</strong>.<br>
+        <img src="../../../../assets/images/sqli-06/beforechangingpass.jpg" alt="beforechangingpass">
+      </li>
+      <li>Now I'm changing the password of the user <strong>r00tpunk' --</strong> from <strong>1234</strong> to <strong>asdf</strong>.<br>
+        <img src="../../../../assets/images/sqli-06/changingnewuserpasswd.jpg" alt="changingnewuserpasswd">
+      </li>
+      <li>Password changed successfully.<br>
+        <img src="../../../../assets/images/sqli-06/passwdchangedsuccesfully.jpg" alt="passwdchangedsuccesfully">
+      </li>
+      <li>Now look after resetting the password for the <strong>r00tpunk' --</strong> account, the <strong>r00tpunk</strong> account’s password changes, even though the <strong>r00tpunk</strong> record itself was never directly edited.<br>
+        <img src="../../../../assets/images/sqli-06/afterchangingpass.jpg" alt="afterchangingpass">
+      </li>
+      <li>The injection works because the stored username <strong>r00tpunk' --</strong> is later concatenated into an UPDATE query without proper escaping.</li>
+    </ol>
+
+    <h2>How the Second‑Order Injection Works</h2>
+    <pre><code>UPDATE users
+SET password = '&lt;new_password&gt;'
+WHERE username = '&lt;logged_in_username&gt;' AND password = '&lt;current_password&gt;';</code></pre>
+
+    <ul>
+      <li><code>&lt;logged_in_username&gt;</code> is taken from the session (derived from the value stored in the database).</li>
+      <li>If the username in the database contains an unescaped payload like <strong>r00tpunk' --</strong>, the query becomes:<br>
+        <pre><code>UPDATE users SET password = 'ASDF'
+WHERE username = 'r00tpunk'--' AND password = '1234';</code></pre>
+      </li>
+      <li>The <code>--</code> starts a comment, truncating the remainder of the query and causing the condition to match the <strong>r00tpunk</strong> row, thereby updating the <strong>r00tpunk</strong>’s password.</li>
+    </ul>
+
+    <p class="cmd">✅ Sanitise on every use, not only on input!</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>

