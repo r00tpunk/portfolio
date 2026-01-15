@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Prevention</title>
+    <style>
+        :root {
+            --bg: #0d0f17;
+            --surface: #13151c;
+            --text: #a0a8b8;
+            --accent: #7aa2f7;
+            --border: #24283b;
+            --cyan: #7dcfff;
+            --green: #9ece6a;
+            --yellow: #e0af68;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .bar span {
+            color: var(--accent);
+        }
+        .wrap {
+            max-width: 960px;
+            margin: auto;
+            padding: 2rem 1rem;
+        }
+        .prompt {
+            color: var(--green);
+        }
+        .cmd {
+            color: var(--yellow);
+        }
+        h1, h2, h3 {
+            color: var(--accent);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        h1 {
+            font-size: 1.4rem;
+        }
+        h2 {
+            font-size: 1.2rem;
+        }
+        h3 {
+            font-size: 1.05rem;
+        }
+        code {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: var(--yellow);
+            font-size: 13px;
+        }
+        pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+        ul {
+            margin-left: 1.2rem;
+            margin-top: 0.5rem;
+        }
+        li {
+            margin-bottom: 0.25rem;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--cyan);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bar">
+        <span>user@lab</span>
+        <span>~/xss/12-prevention</span>
+    </div>
+    <main class="wrap">
+        <h1>XSS Prevention</h1>
+
+        <h2>1. Context-Aware Encoding — OWASP Java Encoder</h2>
+        <pre><code>// HTML body
+&lt;div&gt;&lt;%=Encode.forHtml(user)%&gt;&lt;/div&gt;
+
+// JS string literal
+&lt;script&gt;var name = "&lt;%=Encode.forJavaScript(user)%&gt;";&lt;/script&gt;
+
+// URL parameter
+&lt;a href="search?q=&lt;%=Encode.forUriComponent(user)%&gt;"&gt;link&lt;/a&gt;
+
+// CSS value
+&lt;style&gt;.x{color:'&lt;%=Encode.forCssString(user)%&gt;'}&lt;/style&gt;</code></pre>
+
+        <h2>2. Secure by Default — React + dangerouslySetInnerHTML Lock-down</h2>
+        <pre><code>// ESLint rule: forbid react/no-danger
+// If exception needed:
+&lt;div dangerouslySetInnerHTML={sanitize(user)} /&gt;
+// sanitize uses DOMPurify + CSP whitelist</code></pre>
+
+        <h2>3. Template Engine Hardening — Smarty 3</h2>
+        <pre><code>// Disable PHP tags
+$smarty-&gt;disableSecurity(); // never
+$smarty-&gt;setSecurityPolicy((new Smarty_Security())-&gt;php_functions = []);
+
+// Force auto-escape
+$smarty-&gt;setEscapeHtml(true);</code></pre>
+
+        <h2>4. CSP 3 — Strict Dynamic + Nonce + Hash</h2>
+        <pre><code>Content-Security-Policy:
+  default-src 'none';
+  script-src 'nonce-r4nd0m' 'strict-dynamic' https:;
+  object-src 'none';
+  base-uri 'none';
+  frame-ancestors 'none';</code></pre>
+        <pre><code>&lt;script nonce="&lt;%=nonce%&gt;"&gt;...&lt;/script&gt;
+// Inline scripts without nonce = blocked</code></pre>
+
+        <h2>5. Trusted Types API — DOM Sink Firewall</h2>
+        <pre><code>if(window.trustedTypes&&window.trustedTypes.createPolicy){
+  const escape=trustedTypes.createPolicy('default',{
+    createHTML:(s)=>s.replace(/[<&>]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))
+  });
+}
+// Now el.innerHTML=user; throws if user is string</code></pre>
+
+        <h2>6. PostMessage Validation — Origin Whitelist</h2>
+        <pre><code>window.addEventListener('message',e=>{
+  if(!e.origin.match(/^https:\/\/(www\.)?target\.com$/))return;
+  if(typeof e.data!=='object')return;
+  // JSON schema validate
+},false);</code></pre>
+
+        <h2>7. Regression Tests — JUnit Example</h2>
+        <pre><code>@Test
+public void noRawOutput(){
+  String out=template.render(Map.of("name","&lt;script&gt;"));
+  assertThat(out).doesNotContain("&lt;script&gt;");
+  assertThat(out).contains("&amp;lt;script&amp;gt;");
+}</code></pre>
+
+        <h2>8. Defense-in-Depth Cheatsheet</h2>
+        <ul>
+            <li>Input: validate schema (JSON-Schema, Joi, Pydantic)</li>
+            <li>Output: encode per context (OWASP libs)</li>
+            <li>Headers: CSP, X-Content-Type-Options, X-Frame-Options</li>
+            <li>Browser: enable site-isolation, disable XSS-Auditor (deprecated)</li>
+            <li>CI: lint for innerHTML, eval, document.write</li>
+        </ul>
+
+        <p class="cmd">Prevention is a pipeline — not a single escape call.</p>
+    </main>
+    <footer>
+        <span>EOF ── happy hacking :)</span>
+    </footer>
+</body>
+</html>

